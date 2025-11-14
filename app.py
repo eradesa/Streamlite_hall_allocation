@@ -11,6 +11,7 @@ from io import StringIO
 # Set page configuration
 st.set_page_config(layout="wide", page_title="Cluster Influence Analysis")
 
+
 # Sample data with your exact provided default data
 @st.cache_data
 def generate_sample_data():
@@ -79,7 +80,7 @@ def plot_clusters(df, title, show_willing=True):
     not_willing_color = '#f39c12'
     dormant_color = '#95a5a6'
     text_color = '#2c3e50'
-    border_color = '#34495e'
+    border_color = '#e74c3c'  # CHANGED to RED
     
     for i, (idx, row) in enumerate(df.iterrows()):
         if i >= len(axes):
@@ -91,27 +92,27 @@ def plot_clusters(df, title, show_willing=True):
         # Check if cluster is dormant
         is_dormant = row.get('is_dormant', False) or row['total_population'] == 0
         
-        # Create fancy bounding box with different style for dormant clusters
+        # Create fancy bounding box with THIN RED BORDERS
         if is_dormant:
             bbox = FancyBboxPatch((0.05, 0.05), 0.9, 0.85,
                                  boxstyle="round,pad=0.04", 
-                                 linewidth=4,
-                                 edgecolor='#7f8c8d',
+                                 linewidth=2,  # CHANGED to thin border
+                                 edgecolor='#e74c3c',  # CHANGED to RED
                                  facecolor='#ecf0f1',
                                  linestyle='--')
             face_color = '#ecf0f1'
         else:
             bbox = FancyBboxPatch((0.05, 0.05), 0.9, 0.85,
                                  boxstyle="round,pad=0.04", 
-                                 linewidth=5,
-                                 edgecolor=border_color,
+                                 linewidth=2,  # CHANGED to thin border
+                                 edgecolor='#e74c3c',  # CHANGED to RED
                                  facecolor='#f8f9fa')
             face_color = '#f8f9fa'
         
         ax.add_patch(bbox)
         
-        # CLUSTER NAME INSIDE THE BOX - at the top
-        ax.text(0.5, 0.92, row['name'], ha='center', va='center', 
+        # CLUSTER NAME INSIDE THE BOX - MOVED LOWER
+        ax.text(0.5, 0.88, row['name'], ha='center', va='center', 
                 fontsize=16, fontweight='bold', 
                 color='#2c3e50', alpha=1.0)
         
@@ -124,7 +125,7 @@ def plot_clusters(df, title, show_willing=True):
                     fontsize=12, color='#7f8c8d', alpha=0.7)
         else:
             # Calculate bar heights
-            total_height = 0.6
+            total_height = 0.4  # Reduced height to make space for labels
             if row['total_population'] > 0:
                 normal_height = (row['normal_population'] / row['total_population']) * total_height
                 if show_willing:
@@ -135,13 +136,13 @@ def plot_clusters(df, title, show_willing=True):
             else:
                 normal_height = willing_height = not_willing_height = influences_height = 0
             
-            # Draw population bars
-            y_pos = 0.25
+            # Draw population bars - starting position adjusted
+            y_pos = 0.4  # Adjusted starting position
             
             # Normal population
             normal_bar = patches.Rectangle((0.15, y_pos), 0.7, normal_height, 
                                          facecolor=normal_color, alpha=0.9,
-                                         edgecolor='white', linewidth=2)
+                                         edgecolor='white', linewidth=1)
             ax.add_patch(normal_bar)
             
             if show_willing:
@@ -149,42 +150,50 @@ def plot_clusters(df, title, show_willing=True):
                 y_pos += normal_height
                 willing_bar = patches.Rectangle((0.15, y_pos), 0.7, willing_height, 
                                               facecolor=willing_color, alpha=0.9,
-                                              edgecolor='white', linewidth=2)
+                                              edgecolor='white', linewidth=1)
                 ax.add_patch(willing_bar)
                 
                 # Not willing to move
                 y_pos += willing_height
                 not_willing_bar = patches.Rectangle((0.15, y_pos), 0.7, not_willing_height, 
                                                   facecolor=not_willing_color, alpha=0.9,
-                                                  edgecolor='white', linewidth=2)
+                                                  edgecolor='white', linewidth=1)
                 ax.add_patch(not_willing_bar)
             else:
                 # Total influences (without breakdown)
                 y_pos += normal_height
                 influences_bar = patches.Rectangle((0.15, y_pos), 0.7, influences_height, 
                                                  facecolor=willing_color, alpha=0.9,
-                                                 edgecolor='white', linewidth=2)
+                                                 edgecolor='white', linewidth=1)
                 ax.add_patch(influences_bar)
         
-        # Statistics displayed at the bottom inside the box
+        # NEW LABELS INSIDE THE CLUSTERS
         if not is_dormant:
-            influence_pct = row['influence_percentage']
-            
-            # Total population
-            ax.text(0.5, 0.15, f"TOTAL: {row['total_population']}", 
+            # Members label
+            ax.text(0.5, 0.32, f"Members: {row['normal_population']}", 
                     ha='center', va='center', fontsize=11, fontweight='bold', 
                     color='#2c3e50', alpha=0.9)
             
-            # Influences with color coding
-            ax.text(0.5, 0.10, f"INFLUENCES: {row['influences']} ({influence_pct:.1f}%)", 
+            # Influences willing to move label
+            ax.text(0.5, 0.27, f"Influences willing to move: {row['willing_to_move']}", 
                     ha='center', va='center', fontsize=10, fontweight='bold', 
                     color=willing_color, alpha=0.9)
             
-            if show_willing:
-                # Willing and Not Willing with color coding
-                ax.text(0.5, 0.05, f"WILLING: {row['willing_to_move']}", 
-                        ha='center', va='center', fontsize=9, fontweight='bold', 
-                        color=willing_color, alpha=0.9)
+            # Influences willing not to move label
+            ax.text(0.5, 0.22, f"Influences not willing to move: {row['not_willing_to_move']}", 
+                    ha='center', va='center', fontsize=10, fontweight='bold', 
+                    color=not_willing_color, alpha=0.9)
+            
+            # Total label
+            ax.text(0.5, 0.17, f"Total: {row['total_population']}", 
+                    ha='center', va='center', fontsize=11, fontweight='bold', 
+                    color='#2c3e50', alpha=0.9)
+            
+            # Influence percentage (additional info)
+            influence_pct = row['influence_percentage']
+            ax.text(0.5, 0.12, f"Influence %: {influence_pct:.1f}%", 
+                    ha='center', va='center', fontsize=11, fontweight='bold', 
+                    color='#7f8c8d', alpha=0.8)
         
         # Set limits
         ax.set_xlim(0, 1)
@@ -205,13 +214,13 @@ def plot_clusters(df, title, show_willing=True):
             patches.Rectangle((0, 0), 1, 1, facecolor=normal_color, alpha=0.9, label='Normal Population'),
             patches.Rectangle((0, 0), 1, 1, facecolor=willing_color, alpha=0.9, label='Willing to Move'),
             patches.Rectangle((0, 0), 1, 1, facecolor=not_willing_color, alpha=0.9, label='Not Willing to Move'),
-            patches.Rectangle((0, 0), 1, 1, facecolor=dormant_color, alpha=0.7, label='Dormant Cluster', linestyle='--', edgecolor='#7f8c8d')
+            patches.Rectangle((0, 0), 1, 1, facecolor=dormant_color, alpha=0.7, label='Dormant Cluster', linestyle='--', edgecolor='#e74c3c')
         ]
     else:
         legend_elements = [
             patches.Rectangle((0, 0), 1, 1, facecolor=normal_color, alpha=0.9, label='Normal Population'),
             patches.Rectangle((0, 0), 1, 1, facecolor=willing_color, alpha=0.9, label='Influences'),
-            patches.Rectangle((0, 0), 1, 1, facecolor=dormant_color, alpha=0.7, label='Dormant Cluster', linestyle='--', edgecolor='#7f8c8d')
+            patches.Rectangle((0, 0), 1, 1, facecolor=dormant_color, alpha=0.7, label='Dormant Cluster', linestyle='--', edgecolor='#e74c3c')
         ]
     
     legend_ax.legend(handles=legend_elements, loc='center', ncol=4, 
@@ -587,7 +596,7 @@ def main():
             
             with filter_col3:
                 population_types = ['All', 'Influence', 'Normal']
-                selected_population = st.selectbox("Filter by Population Type", population_types)
+                selected_population = st.selectbox("Filter by Population Type", population_types, index=1)
             
             # Apply filters
             filtered_df = influence_df.copy()
