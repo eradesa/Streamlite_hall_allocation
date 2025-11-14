@@ -8,9 +8,87 @@ import matplotlib.colors as mcolors
 import random
 from io import StringIO
 
-# Set page configuration
-st.set_page_config(layout="wide", page_title="Cluster Influence Analysis")
 
+# Set page configuration
+st.set_page_config(
+    layout="wide", 
+    page_title="Cluster Influence Analysis",
+    initial_sidebar_state="collapsed"  # CHANGED: Added this line
+)
+
+# Add custom CSS to make tabs more prominent and user-friendly
+st.markdown("""
+<style>
+    /* Main tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #f8f9fa;
+        padding: 8px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 60px;
+        white-space: pre-wrap;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        padding: 16px 24px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #495057;
+        border: 2px solid #ff6b6b; /* RED border for unselected tabs */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%); /* YELLOW background gradient */
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: linear-gradient(135deg, #fff59d 0%, #ffe082 100%);
+        color: #212529;
+        border-color: #ff5252;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #4e8cff 0%, #3a7cff 100%) !important;
+        color: white !important;
+        border-color: #2a6cff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(78, 140, 255, 0.3);
+    }
+    
+    .stTabs [aria-selected="true"]:hover {
+        background: linear-gradient(135deg, #3a7cff 0%, #2a6cff 100%) !important;
+        border-color: #1a5cff !important;
+    }
+    
+    /* Make the tab content area more distinct */
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 20px 0px;
+    }
+    
+    /* Header styling for better hierarchy */
+    .main-header {
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        color: #1a365d !important;
+        margin-bottom: 1rem !important;
+        text-align: center !important;
+    }
+    
+    /* Section headers */
+    .section-header {
+        font-size: 1.8rem !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
+        margin-bottom: 1.5rem !important;
+        padding-bottom: 0.5rem !important;
+        border-bottom: 3px solid #4e8cff !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Sample data with your exact provided default data
 @st.cache_data
@@ -420,7 +498,7 @@ def create_influence_details_table(df):
 
 # Main application
 def main():
-    st.title("👥 Cluster Influence Analysis")
+    st.markdown('<h1 class="main-header">👥 Cluster Influence Analysis Dashboard</h1>', unsafe_allow_html=True)
     
     # Sidebar for data management
     st.sidebar.header("📁 Data Management")
@@ -466,11 +544,15 @@ def main():
     st.sidebar.write(f"**Active:** {active_clusters_count} Clusters")
     st.sidebar.write(f"**Total Population:** {total_population}")
     
-    # Create tabs for different views
-    tab1, tab2, tab3 = st.tabs(["📊 Current Clusters", "🔄 Normalized Recommendations", "👤 Influence Details"])
+    # Create enhanced tabs for different views
+    tab1, tab2, tab3 = st.tabs([
+        "📊 **CURRENT CLUSTERS**", 
+        "🔄 **NORMALIZED RECOMMENDATIONS**", 
+        "👤 **INFLUENCE DETAILS**"
+    ])
     
     with tab1:
-        st.header("Current Cluster Distribution")
+        st.markdown('<h2 class="section-header">Current Cluster Distribution</h2>', unsafe_allow_html=True)
         
         # Display overall statistics
         total_pop = st.session_state.df['total_population'].sum()
@@ -495,7 +577,7 @@ def main():
         st.pyplot(legend_fig)
         
         # Display data table
-        st.subheader("Detailed Cluster Data")
+        st.markdown('<h3 class="section-header">Detailed Cluster Data</h3>', unsafe_allow_html=True)
         display_df = st.session_state.df.copy()
         display_df['influence_percentage'] = display_df['influence_percentage'].round(2)
         st.dataframe(display_df[['name', 'total_population', 'normal_population', 
@@ -504,7 +586,7 @@ def main():
                     use_container_width=True)
     
     with tab2:
-        st.header("Normalized Cluster Distribution")
+        st.markdown('<h2 class="section-header">Normalized Cluster Distribution</h2>', unsafe_allow_html=True)
         
         # Calculate normalized distribution
         normalized_df, redistribution_plan = normalize_influences(st.session_state.df)
@@ -538,7 +620,7 @@ def main():
         st.pyplot(legend_fig2)
         
         # Display comparison
-        st.subheader("Before vs After Comparison")
+        st.markdown('<h3 class="section-header">Before vs After Comparison</h3>', unsafe_allow_html=True)
         comp_col1, comp_col2 = st.columns(2)
         
         with comp_col1:
@@ -555,14 +637,14 @@ def main():
         
         # Show movement summary
         if redistribution_plan:
-            st.subheader("Movement Plan")
+            st.markdown('<h3 class="section-header">Movement Plan</h3>', unsafe_allow_html=True)
             movement_df = pd.DataFrame(redistribution_plan)
             st.dataframe(movement_df, use_container_width=True)
         else:
-            st.info("No movements required - clusters are already well balanced!")
+            st.info("✅ No movements required - clusters are already well balanced!")
     
     with tab3:
-        st.header("Influence Details - Table View")
+        st.markdown('<h2 class="section-header">Influence Details - Table View</h2>', unsafe_allow_html=True)
         
         # Create the influence details table
         influence_df = create_influence_details_table(st.session_state.df)
@@ -583,7 +665,7 @@ def main():
                 st.metric("Normal Population", normal_population)
             
             # Add filters
-            st.subheader("Filter Data")
+            st.markdown('<h3 class="section-header">Filter Data</h3>', unsafe_allow_html=True)
             filter_col1, filter_col2, filter_col3 = st.columns(3)
             
             with filter_col1:
@@ -611,7 +693,7 @@ def main():
                 filtered_df = filtered_df[filtered_df['Population Type'] == selected_population]
             
             # Display the table
-            st.subheader("Influence Details Table")
+            st.markdown('<h3 class="section-header">Influence Details Table</h3>', unsafe_allow_html=True)
             st.dataframe(filtered_df, use_container_width=True)
             
             # Add download button
@@ -626,7 +708,7 @@ def main():
             st.warning("No influence data available. Please check your data source.")
         
         # Export data section
-        st.subheader("Export Data")
+        st.markdown('<h3 class="section-header">Export Data</h3>', unsafe_allow_html=True)
         
         if st.button("📥 Download Sample CSV Template"):
             # Create sample template based on your exact data structure
